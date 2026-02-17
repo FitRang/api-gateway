@@ -1,0 +1,75 @@
+http:
+
+  middlewares:
+
+    cors:
+      headers:
+        accessControlAllowOriginList:
+          - http://localhost:5173
+          - http://127.0.0.1:5173
+          - https://fitrang-6c0aa.web.app
+
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+
+        accessControlAllowHeaders:
+          - Accept
+          - Authorization
+          - Content-Type
+
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 3600
+
+    firebase-auth:
+      plugin:
+        firebaseauth: {}
+
+  routers:
+
+    graphql-router:
+      entryPoints:
+        - web
+      rule: "PathPrefix(`/graphql`)"
+      service: federation-service
+      middlewares:
+        - cors
+        - firebase-auth
+
+    ws-router:
+      entryPoints:
+        - web
+      rule: "PathPrefix(`/ws`)"
+      service: delivery-ws-service
+      middlewares:
+        - firebase-auth
+
+    search-router:
+      entryPoints:
+        - web
+      rule: "PathPrefix(`/search`)"
+      service: elasticsearch-service
+      middlewares:
+        - cors
+        - firebase-auth
+
+  services:
+
+    federation-service:
+      loadBalancer:
+        servers:
+          - url: "http://federation-service:4000"
+
+    delivery-ws-service:
+      loadBalancer:
+        servers:
+          - url: "http://delivery-service:8084"
+
+    elasticsearch-service:
+      loadBalancer:
+        servers:
+          - url: "http://elasticsearch:9200"

@@ -1,0 +1,20 @@
+entryPoints:
+  web:
+    address: ":8000"
+
+api:
+  dashboard: true
+  insecure: true
+
+log:
+  level: INFO
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+experimental:
+  localPlugins:
+    firebaseauth:
+      moduleName: github.com/Foxtrot-14/FitRang/firebaseauth

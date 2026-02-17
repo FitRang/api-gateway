@@ -1,17 +1,14 @@
-FROM kong:3.6
+FROM traefik:v3.0
 
 USER root
 
-COPY plugins /usr/local/share/lua/5.1/kong/plugins
+RUN mkdir -p /plugins-local
 
-ENV KONG_PLUGINS=bundled,firebase-token-introspect-plugin
-ENV KONG_LUA_PACKAGE_PATH=/usr/local/share/lua/5.1/?.lua;;
+COPY traefik.yml /etc/traefik/traefik.yml
+COPY dynamic.yml /etc/traefik/dynamic.yml
 
-COPY kong.yml /usr/local/kong/declarative/kong.yml
+COPY plugins /plugins-local
 
-ENV KONG_DATABASE=off
-ENV KONG_DECLARATIVE_CONFIG=/usr/local/kong/declarative/kong.yml
-ENV KONG_PROXY_LISTEN=0.0.0.0:8000
-ENV KONG_ADMIN_LISTEN=0.0.0.0:8001
+RUN chown -R traefik:traefik /plugins-local
 
-USER kong
+USER traefik
