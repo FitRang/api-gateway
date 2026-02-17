@@ -1,0 +1,9 @@
+displayName: Firebase Auth Plugin
+type: middleware
+
+import: github.com/Foxtrot-14/FitRang/firebaseauth
+
+summary: Verifies Firebase JWT tokens
+
+testData:
+  projectID: fitrang-6c0aa

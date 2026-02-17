@@ -22,43 +22,33 @@ func validateToken(tokenString string) (*FirebaseClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&FirebaseClaims{},
-		jwks.Keyfunc,
+		keyFunc,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	claims, ok := token.Claims.(*FirebaseClaims)
-	if !ok {
-		return nil, errors.New("invalid claims type")
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token")
 	}
 
-	if !token.Valid {
-		return nil, errors.New("invalid token signature")
-	}
+	rc := claims.RegisteredClaims
 
-	if claims.Issuer != Issuer {
-		return nil, errors.New("invalid issuer")
-	}
+	// if rc.Issuer != Issuer {
+	// 	return nil, errors.New("invalid issuer")
+	// }
+	//
+	// if !rc.VerifyAudience(ProjectID, true) {
+	// 	return nil, errors.New("invalid audience")
+	// }
 
-	if !claims.VerifyAudience(ProjectID, true) {
-		return nil, errors.New("invalid audience")
-	}
-
-	if !claims.VerifyExpiresAt(time.Now(), true) {
+	if rc.ExpiresAt == nil || time.Now().After(rc.ExpiresAt.Time) {
 		return nil, errors.New("token expired")
 	}
 
-	if !claims.VerifyIssuedAt(time.Now(), true) {
-		return nil, errors.New("invalid issued-at")
-	}
-
-	if claims.Subject == "" {
+	if rc.Subject == "" {
 		return nil, errors.New("invalid subject")
-	}
-
-	if !claims.EmailVerified {
-		return nil, errors.New("email not verified")
 	}
 
 	return claims, nil
