@@ -2,6 +2,11 @@ http:
 
   middlewares:
 
+    strip-graphql:
+      stripPrefix:
+        prefixes:
+          - /graphql
+
     cors:
       headers:
         accessControlAllowOriginList:
@@ -37,6 +42,7 @@ http:
       rule: "PathPrefix(`/graphql`)"
       service: federation-service
       middlewares:
+        - strip-graphql
         - cors
         - firebase-auth
 

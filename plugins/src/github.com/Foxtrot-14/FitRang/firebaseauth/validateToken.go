@@ -56,7 +56,7 @@ func validateToken(tokenString string) (*FirebaseClaims, error) {
 		return nil, errors.New("invalid audience")
 	}
 
-	if claims.ExpiresAt.Time.Before(now) {
+	if claims.ExpiresAt.Before(now) {
 		return nil, errors.New("token expired")
 	}
 
