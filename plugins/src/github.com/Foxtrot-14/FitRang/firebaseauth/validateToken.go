@@ -19,37 +19,75 @@ const (
 )
 
 func validateToken(tokenString string) (*FirebaseClaims, error) {
-	token, err := jwt.ParseWithClaims(
-		tokenString,
-		&FirebaseClaims{},
-		keyFunc,
-	)
+	token, err := jwt.Parse(tokenString, keyFunc)
 	if err != nil {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(*FirebaseClaims)
-	if !ok || !token.Valid {
+	if !token.Valid {
 		return nil, errors.New("invalid token")
 	}
 
-	rc := claims.RegisteredClaims
+	mapClaims := token.Claims.(jwt.MapClaims)
 
-	// if rc.Issuer != Issuer {
-	// 	return nil, errors.New("invalid issuer")
-	// }
-	//
-	// if !rc.VerifyAudience(ProjectID, true) {
-	// 	return nil, errors.New("invalid audience")
-	// }
+	now := time.Now()
 
-	if rc.ExpiresAt == nil || time.Now().After(rc.ExpiresAt.Time) {
+	claims := &FirebaseClaims{
+		Email:         getString(mapClaims, "email"),
+		EmailVerified: getBool(mapClaims, "email_verified"),
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:   getString(mapClaims, "iss"),
+			Subject:  getString(mapClaims, "sub"),
+			Audience: jwt.ClaimStrings{getString(mapClaims, "aud")},
+			ExpiresAt: jwt.NewNumericDate(
+				time.Unix(int64(getFloat(mapClaims, "exp")), 0),
+			),
+			IssuedAt: jwt.NewNumericDate(
+				time.Unix(int64(getFloat(mapClaims, "iat")), 0),
+			),
+		},
+	}
+
+	if claims.Issuer != Issuer {
+		return nil, errors.New("invalid issuer")
+	}
+
+	if !claims.VerifyAudience(ProjectID, true) {
+		return nil, errors.New("invalid audience")
+	}
+
+	if claims.ExpiresAt.Time.Before(now) {
 		return nil, errors.New("token expired")
 	}
 
-	if rc.Subject == "" {
+	if claims.Subject == "" {
 		return nil, errors.New("invalid subject")
 	}
 
+	if !claims.EmailVerified {
+		return nil, errors.New("email not verified")
+	}
+
 	return claims, nil
+}
+
+func getString(m jwt.MapClaims, key string) string {
+	if v, ok := m[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
+func getBool(m jwt.MapClaims, key string) bool {
+	if v, ok := m[key].(bool); ok {
+		return v
+	}
+	return false
+}
+
+func getFloat(m jwt.MapClaims, key string) float64 {
+	if v, ok := m[key].(float64); ok {
+		return v
+	}
+	return 0
 }
