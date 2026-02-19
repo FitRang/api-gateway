@@ -52,6 +52,7 @@ http:
       rule: "PathPrefix(`/ws`)"
       service: delivery-ws-service
       middlewares:
+        - cors
         - firebase-auth
 
     search-router:
